@@ -1,6 +1,9 @@
+# Chapter 20 - NIO2
 
+---
 
 > 1.- What is the output of the following code?
+
 ```
 4: var path = Path.of("/user/./root", "../kodiacbear.txt");
 5: path.normalize().relativize("/lion");
@@ -26,13 +29,13 @@ public void removeBadFile(Path path) {
 
 This code does not compile. The reason is that the method `Files.deleteIfExists()` declares a checked `IOException` that needs to be handled or declared. If the method was corrected to declare the appropriate exceptions, adding a `path` that refers to an empty directory on the file system, `Success` would be printed.
 
-Adding a `path` value that refers to a symbolic link pointing to an empty directory in the file system would also print `Success`. 
+Adding a `path` value that refers to a symbolic link pointing to an empty directory in the file system would also print `Success`.
 
-In both cases, if the directory is not empty, a `DirectoryNotEmptyException` will be thrown at runtime. *To delete a directory, it must be empty*.
+In both cases, if the directory is not empty, a `DirectoryNotEmptyException` will be thrown at runtime. _To delete a directory, it must be empty_.
 
 **Note:** Most `Files` methods declare `IOException`, especially the ones that modify a file or directrory.
 
->3.- What is the result of executing the following code?
+> 3.- What is the result of executing the following code?
 
 ```
 4: var p = Paths.get("sloth.schedule");
@@ -96,12 +99,12 @@ try (var z = Files.walk(path)) {
 }
 ```
 
-This code does not compile. First, the `filter()` operation applied to a `Stream<Path>` takes only one parameter, not two, so the code does not compile because of line x. 
+This code does not compile. First, the `filter()` operation applied to a `Stream<Path>` takes only one parameter, not two, so the code does not compile because of line x.
 
 **Note:** The `filter()` method returns a `Stream` with elements that match a given expression. Here the method signature
 
 ```
-Stream<T> filter(Predicate<? super T> predicate) 
+Stream<T> filter(Predicate<? super T> predicate)
 ```
 
 > 7.- If the current working directory is `/zoo` and the path `/zoo/turkey` does not exists, then what is the result of the following code?
@@ -120,9 +123,9 @@ The code compiles but throws an exception at runtime. First, the method `Files.i
 public static boolean isSameFile(Path path, Path path2) throws IOException
 ```
 
-throws a checked `IOException` exception. In most usages of `isSameFile()`, an exception will be thrown if the path does not exists. 
+throws a checked `IOException` exception. In most usages of `isSameFile()`, an exception will be thrown if the path does not exists.
 
-There is a special case in which it does not. If the two path objects are equal, in terms of `equals()`, then the method will just return `true` without checking whether the file exists. 
+There is a special case in which it does not. If the two path objects are equal, in terms of `equals()`, then the method will just return `true` without checking whether the file exists.
 
 **Note:** This `isSameFile()` method does not compare the contents of the files. Two files may have identical names, content and attributes, but if they are different locations, then this method will return `false`.
 
@@ -130,9 +133,9 @@ There is a special case in which it does not. If the two path objects are equal,
 
 The following are valid ways of creating a `Path` instance:
 
-* `FileSystems.getDefault().getPath("puma.txt")` First, the class `FileSystems` include factory methods for file systems. The `getDefault()` method get the default file system. The working directory of the file system is the current user directory, named by the system property `user.dir`. This allows for interoperability with the `java.io.File` class.  That's why we can call the `getPath()` method.
-* `new java.io.File("tiger.txt").toPath()` This call will give us a instance of `File` for the file `tiger.txt`. And from that file instance, we can call the `getPath()` method to get the string form form of this abstract pathname.
-* `Path.of(Path.of(".").toUri())` First, we can call the method `toUri()` from a `Path` instance. And since `Path.of()` have an overloaded static method that takes an URI instead of a string, this code is valid.
+- `FileSystems.getDefault().getPath("puma.txt")` First, the class `FileSystems` include factory methods for file systems. The `getDefault()` method get the default file system. The working directory of the file system is the current user directory, named by the system property `user.dir`. This allows for interoperability with the `java.io.File` class. That's why we can call the `getPath()` method.
+- `new java.io.File("tiger.txt").toPath()` This call will give us a instance of `File` for the file `tiger.txt`. And from that file instance, we can call the `getPath()` method to get the string form form of this abstract pathname.
+- `Path.of(Path.of(".").toUri())` First, we can call the method `toUri()` from a `Path` instance. And since `Path.of()` have an overloaded static method that takes an URI instead of a string, this code is valid.
 
 > 9.- What is the output of the following code?
 
@@ -164,11 +167,11 @@ public static Stream<String> lines(Path path) throws IOException
 public static List<String> readAllLines(Path path) throws IOException
 ```
 
-With the first method, `Files.lines()`, the contents of the file are read and processed lazily, which means that only a small portion of the file is stored in memory at any given time. *For this reason, `Files.lines()` works better on large files with limited memory available.*
+With the first method, `Files.lines()`, the contents of the file are read and processed lazily, which means that only a small portion of the file is stored in memory at any given time. _For this reason, `Files.lines()` works better on large files with limited memory available._
 
 The second method, `Files.readAllLines()`, read the entire file, with the resulting `List<String>` storing all of the contents of the file in memory at once. If the file is significantly large, then a `OutOfMemoryError` may be triggered trying to load all of it into memory.
 
-Although a `List` can be converted to a stream, this require an extra step. *For this reason `Files.lines()` is useful since the returned `Stream<String>` can be chained with functional programming methods like `filter()` and `map()` directly.*
+Although a `List` can be converted to a stream, this require an extra step. _For this reason `Files.lines()` is useful since the returned `Stream<String>` can be chained with functional programming methods like `filter()` and `map()` directly._
 
 > 11.- Assume `monkey.txt` is a file that exists in the current working directory. Which statements about the following code snippet are correct?
 
@@ -181,19 +184,19 @@ Files.move(Path.of("monkey.txt"), Paths.get("/animals"),
 First, lets take a look at the method definition:
 
 ```
-public static Path move(Path source, Path target), 
+public static Path move(Path source, Path target),
 	CopyOption... options) throws IOException
 ```
 
-The `NOFOLLOW_LINKS` option means that if the source is a symbolic link, the link itself and not the target will be copied at runtime. The option `ATOMIC_MOVE` means that *any process monitoring the file system will not see an incomplete file during the move.*
+The `NOFOLLOW_LINKS` option means that if the source is a symbolic link, the link itself and not the target will be copied at runtime. The option `ATOMIC_MOVE` means that _any process monitoring the file system will not see an incomplete file during the move._
 
-> 12.- What are some advantages of NIO.2 over the legacy `java.io.File` class for working with files.  // Adddd info
+> 12.- What are some advantages of NIO.2 over the legacy `java.io.File` class for working with files. // Adddd info
 
 NIO.2 has several advantages over `File`. Some of those are the following:
 
-* NIO.2 supports file system-dependent attributes.
-* NIO.2 includes a method to traverse a directory tree.
-* NIO.2 includes methods that are aware of symbolic links.
+- NIO.2 supports file system-dependent attributes.
+- NIO.2 includes a method to traverse a directory tree.
+- NIO.2 includes methods that are aware of symbolic links.
 
 > 13.- For the `copy()` method shown here, assume that the source exists as a regular file and that the target does not. What is the result of the following code?
 
@@ -212,20 +215,20 @@ This code compiles without any issue and it will output `false`. Even though the
 
 ```
 var f = Path.of("/monkeys");
-try (var m = 
+try (var m =
 	Files.find(f, 0, (p,a) -> a.isSymbolicLink())) {  // y1
 		m.map(s -> s.toString())
 			.collect(Collectors.toList())
 			.stream()
 			.filter(s -> s.toString().endsWith(".txt"))  // y2
-			.forEach(System.out::println);	
+			.forEach(System.out::println);
 }
 ```
 
 The code compiles, runs without issue and prints nothing. First, let's take a look at the method definition:
 
 ```
-public static Stream<Path> find(Path start, 
+public static Stream<Path> find(Path start,
 	int maxDepth,
 	BiPredicate<Path, BasicFileAttributes> matcher,
 	FileVisitOption... options) throws IOException
@@ -239,7 +242,7 @@ In this case, `maxDepth = 0`, meaning the only record that will be searched is t
 
 Let's remember that `java.io.File` method `listFiles()` retrieves the members of the current directory without traversing any subdirectories. The most similar method in NIO.2 that does this is `Files.list()` as return a `Stream<Path>` of a single directory.
 
-> 16.- What are some advantages of using NIO.2's `Files.readAttributes()` method rather that reading attributes individually from a file? 
+> 16.- What are some advantages of using NIO.2's `Files.readAttributes()` method rather that reading attributes individually from a file?
 
 Whether a path is a symbolic link, file, or directory is not relevant. Using a view to read multiple attributes leads to fewer round-trips between the process and the file system and better performance. For reading single attributes, there is little or no expected gain.
 
@@ -248,6 +251,7 @@ Finally, views can be used to access file system-specific attributes that are no
 > 17.- Assuming the `/fox/food-schedule.csv` file exists with the specified contents, what is the expected output of calling `printData()` on it?
 
 **/fox/food-schedule.csv**
+
 ```
 6am,Breakfast
 9am,SecondBreakfast
@@ -279,9 +283,9 @@ Files.walk(x.toRealPath().getParent())  // u1
 	.forEach(System.out::println);
 ```
 
-The code compiles without issue. The `toRealPath()` method will simplify the path to `/animals` and *throw an exception if it does not exists*.
+The code compiles without issue. The `toRealPath()` method will simplify the path to `/animals` and _throw an exception if it does not exists_.
 
-If the path does exists, calling `getParent()` on it returns the root directory. Walking the root directory with the filter expression will *print all `.java` files in the root directory along with all `.java` files in the directory tree*.
+If the path does exists, calling `getParent()` on it returns the root directory. Walking the root directory with the filter expression will _print all `.java` files in the root directory along with all `.java` files in the directory tree_.
 
 **Note:** The method
 
@@ -289,11 +293,11 @@ If the path does exists, calling `getParent()` on it returns the root directory.
 public Path toRealPath(LinkOption... options) throws IOException
 ```
 
-is similar to `normalize()`, in that it eliminates any redundant path symbols. It is also similar to `toAbsolutePath()`, in that it will join the path with the current working directory if the path is relative. 
+is similar to `normalize()`, in that it eliminates any redundant path symbols. It is also similar to `toAbsolutePath()`, in that it will join the path with the current working directory if the path is relative.
 
 Unlike those methods, though, `toRealPath()` will throw an exception if the path does not exists. In addition, it will follow symbolic links, with an optional varargs parameter to ignore them.
 
-**Note:** The method 
+**Note:** The method
 
 ```
 public static Stream<Path> walk(Path start,
@@ -339,7 +343,7 @@ public static boolean isSameFile(Path path, Path path2) throws IOException
 
 takes two `Path` objects as input, resolves all path symbols, and follows symbolic links.
 
-While most usages of `isSameFile()` will trigger an exception if the paths do not exists, there is a special case in which it does not. If the two path objects are equal, in terms of `equals()`, then the method will just return `true` without checking whether the file exists. 
+While most usages of `isSameFile()` will trigger an exception if the paths do not exists, there is a special case in which it does not. If the two path objects are equal, in terms of `equals()`, then the method will just return `true` without checking whether the file exists.
 
 > 20.- Assuming the current directory is `/seals/harp/food`, what is the result of executing the following code?
 
@@ -387,7 +391,7 @@ Since the question says the file already exists, the `REPLACE_EXISTING` option m
 **Note:** The method
 
 ```
-public static Path copy(Path source, Path target, 
+public static Path copy(Path source, Path target,
 	CopyOption... options) throws IOException
 ```
 
@@ -400,7 +404,7 @@ A shallow copy means that the files and subdirectories within the directory are 
 ```
 void duplicateFile(Path m, Path x) throws Exception {
 	var r = Files.newBufferedReader(m);
-	var w = Files.newBufferedWriter(x, 
+	var w = Files.newBufferedWriter(x,
 		StandardOpenOption.APPEND);
 	String currentLine = null;
 	while ((currentLine = r.readLine()) != null)

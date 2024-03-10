@@ -1,3 +1,6 @@
+# Chapter 21 - JDBC
+
+---
 
 > 1.- Which interfaces or classes are in a database-specific JAR file?
 
@@ -15,7 +18,7 @@ A JDBC URL is made of three parts
 <protocol>:<subprotocol>:<subname>
 ```
 
-where the protocol, is always the string `jdbc`. The subprotocol, is the name of the database such as `derby`, `mysql` or `postgres`. The subname is a database-specific format, which contains database-specific connection details. Colons (:) separate the three parts. 
+where the protocol, is always the string `jdbc`. The subprotocol, is the name of the database such as `derby`, `mysql` or `postgres`. The subname is a database-specific format, which contains database-specific connection details. Colons (:) separate the three parts.
 
 That said, the following are valid JDBC URL's
 
@@ -28,7 +31,7 @@ jdbc:mysql://localhost:3306/zoo?profileSQL=true
 
 > 3.- Which of the following is a valid JDBC URL?
 
-The URL 
+The URL
 
 ```
 jdbc:sybase:localhost:1234/db
@@ -46,13 +49,13 @@ try (var ps = conn.preparedStatement(sql)) {
 }
 ```
 
-The statements 
+The statements
 
 ```
 ps.setString(1, "snow");
 ```
 
-and 
+and
 
 ```
 ps.setString(1, "snow"); ps.setString(1, "snow");
@@ -150,7 +153,7 @@ This code works as expected. It updates each of the five rows in the table and r
 
 The first issue is that line 18 is missing braces. For all SQL in a `CallableStatement` you are supposed to use braces (`{}`).
 
-The second issue is that line 18 is missing a `?`.  Each parameter should be passed with a question mark (`?`).
+The second issue is that line 18 is missing a `?`. Each parameter should be passed with a question mark (`?`).
 
 **Note:** A stored procedure is code that is compiled in advance and stored in the database. Stored procedures are commonly written in a database-specific variant of SQL, which varies among database software providers.
 
@@ -186,7 +189,7 @@ try (var ps = conn.prepareStatement(sql)) {
 	ps.setString(1, "bat");
 
 	try (var rs = ps.executeQuery(sql)) {
-		while (rs.next()) 
+		while (rs.next())
 			System.out.println(rs.getString(1));
 	}
 }
@@ -203,7 +206,7 @@ public static void main(String[] args) {
 	var sql = "UPDATE food SET amount = amount + 1";
 	try (var conn = DriverManager.getConnection("jdbc:derby:zoo");
 		var ps = conn.prepareStatement(sql)) {
-		
+
 			var result = ps.executeUpdate();
 			System.out.println(result);
 		}
@@ -216,7 +219,7 @@ If the exception were handled or declared, the answer would be `5`. Remember tha
 
 > 12.- Suppose we have a JDBC program that calls a stored procedure, which returns a set of results. Which is the correct order in which to close database resources for this call?
 
-The correct order is `ResultSet, CallableStatement, Connection`.  JDBC resources should be closed in the reverse order from that in which they were opened. The order for opening is `Connection, CallableStatement, ResultSet`.
+The correct order is `ResultSet, CallableStatement, Connection`. JDBC resources should be closed in the reverse order from that in which they were opened. The order for opening is `Connection, CallableStatement, ResultSet`.
 
 > 13.- Suppose that the table `counts` has five rows with the numbers 1 to 5. How many lines does this code print?
 
@@ -274,8 +277,7 @@ The issue is that since an `OUT` parameter is used, the code should call` regist
 We should always call `registerOutParameter()` for each `OUT` or `INOUT` parameter.
 
 **Note:** We call `execute()` instead of `executeQuery()` since we are not returning a `ResultSet`.
-	The `execute()` method return a boolean to indicate the form of the first result. Return `true` if the first result is a `ResultSet` object. Returns `false` if the first result is an update count or there is no result.
-	
+The `execute()` method return a boolean to indicate the form of the first result. Return `true` if the first result is a `ResultSet` object. Returns `false` if the first result is an update count or there is no result.
 
 > 16.- Which of the following can fill in the blank?
 
@@ -297,7 +299,7 @@ INSERT INTO toys VALUES (?, ?, ?)
 
 can fill in the blank.
 
-First, notice  that this code uses a `PreparedStatement`. This means that stored procedures can not be used here, since they are for `CallableStatement`. Next, remember that the number of parameters must be an exact match.
+First, notice that this code uses a `PreparedStatement`. This means that stored procedures can not be used here, since they are for `CallableStatement`. Next, remember that the number of parameters must be an exact match.
 
 > 17.- Suppose that the table `counts` has five rows with the numbers 1 to 5. How many lines does this code prints?
 
@@ -305,7 +307,7 @@ First, notice  that this code uses a `PreparedStatement`. This means that stored
 var sql = "SELECT num FROM counts WHERE num > ?";
 try (var ps = conn.prepareStatement(sql)) {
 	ps.setInt(1, 3);
-	
+
 	try (var rs = ps.executeQuery()) {
 	while (rs.next())
 		System.out.println(rs.getObject(1));
