@@ -1,7 +1,5 @@
 # Chapter 21 - JDBC
 
----
-
 > 1.- Which interfaces or classes are in a database-specific JAR file?
 
 The implementations for `Driver` and `PreparedStatement` interfaces is contained inside the database-specific driver JAR file.

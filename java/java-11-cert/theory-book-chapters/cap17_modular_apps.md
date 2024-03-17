@@ -1,5 +1,7 @@
 # Cap. 17 - Modular Applications
 
+---
+
 > 1.- Which of the following pairs make up a service?
 
 A service consists of the service provider interface and logic to look up implementations using a service locator. A service is composed of an interface, any classes the interface references, and a way of looking up implementations of the interface. The implementations are not part of the service.
