@@ -202,4 +202,242 @@ The `ConcurrentSkipListSet` class allows modifications, and since it enforces un
 
 Finally, despite using the elements of `lions` to populate the collections, `tigers` and `bears` are not backed by the original list, so the size of `lions` is 3 throughout this program.
 
-> 11.- 
+> 11.- What statements about the following code are true?
+
+```
+Integer i1 = List.of(1, 2, 3, 4, 5).stream().findAny().get();
+syncronized(i1) {   // y1
+    Integer i2 = List.of(6, 7, 8, 9, 10)
+        .parallelStream()
+        .sorted()
+        .findAny().get();   // y2
+    System.out.println(i1 + " " + i2);
+}
+```
+
+The following statement is correct: *The output cannot be determined ahead of time.*
+
+The code compiles and run without any issue.
+
+First, note that synchronizing on the first variable does not actually impact the results of the code since only one thread is being used.
+
+Second, sorting on a parallel stream does not mean that `findAny()` will return the first record. The `findAny()` method will return the value from the first thread that retrieves a record. Therefore, the output is not guaranteed.
+
+**Note:** Remember that even on serial streams, the `findAny()` method is free to select any element.
+
+> 12.- Assuming `takeNap()` is a method that takes five seconds to execute without throwing an exception, what is the expected result of executing the following code snippet?
+
+```
+ExecutorService service = null;
+try {
+    service = Executors.newFixedThreadPool(4);
+    service.execute(() -> takeNap());
+    service.execute(() -> takeNap());
+    service.execute(() -> takeNap());
+} finally {
+    if (service != null) service.shutdown();
+}
+service.awaitTermination(2, TimeUnit.SECONDS);
+System.out.println("DONE!");
+```
+
+The code will pause for 2 seconds and then print `DONE!`.
+
+The code snippet submits three tasks to an `ExecutorService`, shuts it down, and the waits for the results. The `awaitTermination()` method waits the specified amount of time for all tasks to complete, and the service to finish shutting down.
+
+Since each five-seconds task is still executing, the `awaitTermination()` method will return a value of `false` after two seconds but not throw an exception.
+
+**Note:** The `awaitTermination()` method waits the specified amount of time to complete all tasks, returning sooner if all tasks finish or an `InterruptedException` is detected.
+
+> 13.- What statements about the following code are true?
+
+```
+System.out.print(List.of("duck", "flamingo", "pelican")
+    .parallelStream().parallel()    // q1
+    .reduce(0, 
+        (c1, c2) -> c1.length() + c2.length(),  // q2
+        (s1, s2) -> s1 + s2));  // q3
+```
+
+The code will not compile because of line `q2`.
+
+The problem here is that `c1` is an `int` and `c2` is a `String`, so the code fails to combine on line `q2`, since calling `length()` on an `int` is not allowed.
+
+The rest of the lines compile without issue. Note that calling `parallel()` on an already parallel stream is allowed, and it may in fact return the same object.
+
+**Note:** The stream operation `reduce()` combines a stream into a single object. The following is the signature of the method.
+
+```
+<U> U reduce(U identity,
+    BiFunction<U,? super T, U> accumulator,
+    BinaryOperator<U> combiner)
+```
+
+> 14.- What statements about the following code snippet are true?
+
+```
+Object o1 = new Object();
+Object o2 = new Object();
+var service = Executors.newFixedThreadPool(2);
+var f1 = service.submit(() -> {
+    synchronized(o1) {
+        synchronized(o2) { System.out.print("Tortoise); } 
+    }
+});
+var f2 = service.submit(() -> {
+    synchronized(o2) {
+        synchronized(o1) { System.out.print("Hare"); }
+    }
+});
+f1.get();
+f2.get();
+```
+
+The following statements are correct:
+
+- If the code does output anything, the order cannot be determined.
+- The code compiles but may produce a deadlock at runtime
+
+The code compiles without any issue. Since both tasks are submitted to the same thread executor pool, the order cannot be determined. The key here is that the order in which the resources `o1` and `o2` are synchronized could result in a deadlock. For example, if the first thread gets a lock on `o1` and the second thread gets a lock on `o2` before either thread can get their second lock, the code will hang on runtime.
+
+Note that the code cannot produce a livelock, since both threads are waiting. Remember that on a livelock, the threads are active and trying to complete their task. In this case, both threads are waiting.
+
+Finally, if a deadlock does occur, an exception will not been thrown since no exceptions are thrown when a deadlock occurs.
+
+> 15.- Which statement about the following code snippet is correct?
+
+```
+2: var cats = Stream.of("leopard", "lynx", "ocelot", "puma")
+3:    .parallel();
+4: var bears = Stream.of("panda", "grizzly", "polar").parallel();
+5: var data = Stream.of(cats, bears).flatMap(s -> s)
+6:    .collect(Collectors.groupingByConcurrent(
+7:      s -> !s.startsWith("p")));
+8: System.out.println(data.get(false).size()
+9:      + " " + data.get(true).size());
+```
+
+The code compiles and run without any issue and it outputs `3 4`.
+
+The `collect()` operation groups the animals into those that do and do not start with the letter `p`. Note that there are four animals that do not start with the letter `p` and three animals that do. The logical complement operator (!) before the `startsWith()` method means that the result are reversed, so the output is `3 4`.
+
+**Notes:** 
+- Remember that a `flatMap()` returns a stream consisting of the results of replacing each element of this stream with the contents of a mapped stream produced by applying the provided mapping function to each element. That said, a `flatMap()` produces an arbitrary number (zero or more) of values for each input value.
+- The method `Colectors.groupingByConcurrent()` returns a concurrent `Collector` implementing a "group by" operation on input elements, grouping elements according to a classification function that is provided to the method as a parameter. The classification function maps elements to some key type `K`. The collector produces a `ConcurrentMap<K, List<T>>` whose keys are the values resulting from applying the classification function to the input elements, and whose corresponding values are Lists containing the input elements which map to the associated key under the classification function.
+
+> 16.- Which statements about methods in `ReentrantLock` are correct?
+
+None of the above.
+
+To keep in mind:
+
+- The `lock()` method will wait indefinitely for a lock.
+- The method name to attempt to acquire a lock is `tryLock()`.
+- By default, a `ReentrantLock` fairness is set to `false` and must be enabled by using an overloaded constructor.
+- A thread that holds the lock mat have called `lock()` or `tryLock()` multiple times. A thread needs to call `unlock()` once for each call to `lock()` and `tryLock()` to release a resource so that other threads can obtain the lock.
+
+> 17.- What is the result of calling the following method?
+
+```
+3: public void addAndPrintItems(BlockingQueue<Integer> queue) {
+4:    queue.offer(103);
+5:    queue.offer(20, 1, TimeUnit.SECONDS);
+6:    queue.offer(85, 7, TimeUnit.HOURS);
+7:    System.out.print(queue.poll(200, TimeUnit.NANOSECONDS));
+8:    System.out.print(" " + queue.poll(1, TimeUnit.MINUTES));
+9: }
+```
+
+The code does not compile.
+
+The methods on line 5, 6, 7 and 8 each throw `InterruptedException`, which is a checked exception; therefore the code does not compile.
+
+If `InterruptedException` was declared in the method signature on line 3, then the answer will be that the output cannot be determined ahead of time, because adding items to the `queue` may be blocked at runtime. In this case, the queue is passed into the method, so there could be other threads operating on it.
+
+**Notes:** 
+- An `InterruptedException` is thrown when a thread is waiting, sleeping, or otherwise occupied, and the thread is interrupted, either before or during the activity.
+- A `BlockingQueue` is an interface, just as a regular `Queue`, except that it includes methods that will wait a specific amount of time to complete an operation.
+
+> 18.- Which of the following are valid `Callable` expressions?
+
+The following are valid `Callable` expressions:
+- `() -> 5`
+- `() -> "The" + "Zoo`
+- `() -> {System.out.println("Giraffe"); return 10;}`
+
+Remember that a `Callable` lambda expression takes no values and returns a generic type.
+
+> 19.- What is the result of executing the following application?
+
+```
+import java.util.concurrent.*;
+import java.util.stream.*;
+public class PrintConstants {
+    public static void main(String[] args) {
+        var s = Executors.newScheduledThreadPool(10);
+        DoubleStream.of(3.14159, 2.71828)   // b1
+            .forEach(c -> s.submit(     // b2
+                () -> System.out.println(10*c)));   // b3
+        s.execute(() -> System.out.println("Printed"));     // b4
+    }
+}
+```
+
+The code compiles, but the result cannot be determined ahead of time. Compiles but waits forever at runtime.
+
+The application compiles without throwing an exception. Even though the stream is processed in sequential order, the task are submitted to a thread executor, which may complete the task in any order. Therefore the output cannot be determined ahead of time.
+
+The thread executor is never shut down; therefore, the code will run but it will never terminate.
+
+**Note:** Calling `forEach()` on an infinite stream does not terminate. Since there is no return value, there is no reduction.
+
+Notice that this is the only terminal operation with a return type of `void`. The method signature is as follows:
+```
+void forEach(Consumer<? super T> action)
+```
+
+Remember that you use a `Consumer` when you want to do something with a parameter but not return anything. The interface is defined as follows:
+```
+@FunctionalInterface
+public interface Consumer<T> {
+    void accept(T t);
+    // Ommited default method
+}
+```
+
+> 20.- What is the result of executing the following program?
+
+```
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.*;
+public class PrintCounter {
+    static int count = 0;
+    public static void main(String[] args) throws
+            InterruptedException, ExecutionException {
+        ExecutorService service = null;
+        try {
+            service = Executors.newSingleThreadExecutor();
+            var r = new ArrayList<Future<?>>();
+            IntStream.iterate(0, i -> i+1).limit(5).forEach(
+                i -> r.add(service.execute(() -> {count++;}))   // n1
+            );
+            for (Future<?> result : r) {
+                System.out.print(result.get()+" ");     // n2
+            }
+        } finally {
+            if(service != null) service.shutdown();
+        }}}
+```
+
+The code will not compile because of line `n1`.
+
+The key to solving this question is to remember that the `execute()` method return `void`, no a `Future` object or `null`. Therefore, line `n1` does not compile.
+
+If the `submit()` method had been used instead of `execute()`, then the code would print `null null null null null` as the output of the `submit(Runnable)` task is a `Future<?>` object that can only return `null` on its `get()` method.
+
+**Note:** Remember that the `submit(Runnable)` method has the following definition:
+```
+Future<?> submit(Runnable task)
+``` 
+And submits a `Runnable` task for execution and returns a `Future` representing that task. The Future's get method will return `null` upon successful completion.
