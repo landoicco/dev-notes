@@ -441,3 +441,167 @@ If the `submit()` method had been used instead of `execute()`, then the code wou
 Future<?> submit(Runnable task)
 ``` 
 And submits a `Runnable` task for execution and returns a `Future` representing that task. The Future's get method will return `null` upon successful completion.
+
+> 21.- Given the following code snippet and the blank lines on `p1` and `p2`, which values guarantee `1` is printed at runtime?
+```
+var data = List.of(List.of(1,2),
+    List.of(3.4),
+    List.of(5,6));
+data.____________    // p1
+    .flatMap(s -> s.stream())
+    .____________   // p2
+    .ifPresent(System.out::print);
+```
+
+The following values guarantee `1` is printed at runtime:
+- `stream()` on line `p1`, `findFirst()` on line `p2`.
+- `parallelStream()` in line `p1`, `findFirst()` on line `p2`.
+
+The `findFirst()` method guarantees the first element in the stream will be returned, whether is serial or parallel.
+
+**Note:** Remember that `findFirst()` is a method of the `Stream` class and returns an `Optional` describing the first element of this stream, or an empty `Optional` if the stream is empty. If the stream has no encounter order, then any element may be returned. This is their method signature:
+```
+Optional<T> findFirst()
+```
+The `ifPresent()` method is defined in the `Optional` class and this is their method definition.
+```
+public void ifPresent(Consumer<? super T> consumer)
+```
+If a value is present, invoke the specified consumer with the value, otherwise do nothing
+
+> 22.- Assuming 100 milliseconds is enough time for the tasks submitted to the service executor to complete, what is the result of executing the following method?
+```
+private AtomicInteger s1 = new AtomicInteger(0);    // w1
+private int s2 = 0;
+
+private void countSheep() throws InterruptedException {
+    ExecutorService service = null;
+    try {
+        service = Executors.newSingleThreadExecutor();  // w2
+        for (int i = 0; i < 100; i++)
+            service.execute(() -> {
+                s1.getAndIncrement(); s2++; }); // w3
+        Thread.sleep(100);
+        System.out.println(s1 + " " + s2);
+    } finally {
+        if (service != null) service.shutdown();
+    }
+}
+```
+
+The method consistently prints `100 100`.
+
+The code compiles and runs without issue. The key aspect to notice in the code is that a single-thread executor is used, meaning that no task will be executed concurrently. Therefore the result are valid and predictable with `100 100` being the output.
+
+If a pooled thread executor was used with at least two threads, then the `s2++` operations could overwrite each other, making the second value indeterminate at the end of the program. In that case, the output cannot be determined ahead of time.
+
+> 23.- What is the result of executing the following application?
+```
+import java.util.concurrent.*;
+import java.util.stream.*;
+public class StockRoomTracker {
+    public static void await(CyclicBarrier cb) {    // j1
+        try { cb.await(); } catch (Exception e) {}
+    }
+    public static void main(String[] args) {
+        var cb = new CyclicBarrier(10,
+            () -> System.out.println("Stock Room Full!"));  // j2
+        IntStream.iterate(1, i -> 1).limit(9).parallel()
+            .forEach(i -> await(cb));   // j3
+    }
+}
+```
+The code compiles but waits forever at runtime.
+
+The code compiles without issue. The limit on the cyclic barrier is 10, but the stream can generate only up to 9 threads that reach the barrier; therefore the limit can never be reached and the code waits forever at runtime.
+
+Even if the `limit(9)` statemenet was changed to `limit(10)`, the program could still hang since the JVM might not allocate 10 threads to the paralled stream.
+
+**Note:** The `CyclicBarrier` takes in its constructors a limit value, indicating the number of threads to wait for. As each thread finishes, it calls the `await()` method on the cyclic barrier. Once the specified numer of threads have each called `await()`, the barrier is released, and all threads can continue.
+
+> 24.- What statements about the following class definition are true?
+```
+public class TicketManager {
+    private int tickets;
+    private static TicketManager instance;
+    private TickerManager() {}
+    static synchronized TicketManager getInstance() {   // k1
+        if (instance==null) instance = new TicketManager();   // k2
+        return instance;
+    }
+
+    public int getTicketCount() { return tickets; }
+    public void addTickets(int value) {tickets += value;}     // k3
+    public void sellTickets(int value) {
+        synchronized (this) {   // k4
+            tickets -= value;
+        }
+    }
+}
+```
+
+The following statements are correct:
+
+- The code compiles without issue. 
+- At most one instance of `TicketManager` will be created in an application that uses this class.
+
+Since `getInstance()` is a `static` method and `sellTickets()` is an instance method, lines `k1` and `k4` synchronize on different objects.
+
+The class is not thread safe because the `addTickets()` method is not synchronized.
+
+For example, one thread could call `sellTickets()` while another thread calls `addTickets()`. This methods are not synchronized with each other and could cause an invalid number of tickets due to a race condition.
+
+Finally, the `getInstance()` method is `synchronized`. Since the constructor is `private`, this method is the only way to create an instance of `TicketManager` outside the class. The first thread to enter the method will set the `instance` variable, and all other threads will use the existing value. This is actually a singleton pattern.
+
+> 25.- Which of the following properties of concurrency are true?
+
+The following statements are true:
+
+- By itself, concurrency does not guarantee which task will be completed first.
+- Applications with many resource-heavy tasks tend to benefit more from concurrency than ones with CPU-intensive tasks.
+
+Applications with numerous resource requests will often be stuck waiting for a resource, which allows other tasks to run. Therefore they tend to benefit more from concurrency than CPU-intensive tasks.
+
+Concurrency may in fact make an application slower if it is truly sigle-threaded in nature. There is a cost associated with allocating additional memory and CPU time to manage the concurrent process.
+
+Note that single-processor CPUs have been benefiting from concurrency for decades.
+
+> 26.- Assuming an implementation of the `performCount()` method is provided prior to runtime, which of the following are possible results of executing the following application?
+```
+import java.util.*;
+import java.util.concurrent.*;
+public class CountZooAnimals {
+    public static void performCount(int animal) {
+        // IMPLEMENTATION OMITTED
+    }
+    public static void printResults(Future<?> f) {
+        try {
+            System.out.println(f.get(1, TimeUnit.DAYS));    // o1
+        } catch (Exception e) {
+            System.out.println("Exception!");
+        }
+    }
+    public static void main(String[] args) throws Exception {
+        ExecutorService s = null;
+        final var r = new ArrayList<Future<?>>();
+        try {
+            s = Executors.newSingleThreadExecutor();
+            for(int i = 0; i < 10; i++) {
+                final int animal = i;
+                r.add(s.submit(() -> preformCount(animal)));    // o2
+            }
+            r.forEach(f -> printResults(f));
+        } finally {
+            if (s != null) s.shutdown();
+        } } }
+```
+
+The following statements are possible results:
+ - It outputs a `null` value 10 times
+ - It output an `Exception!` 10 times
+ 
+The code compiles and runs without any issue. The return type of `performCount()` is `void`, so `submit()` is interpreted as being applied to a `Runnable` expression. While `submit(Runnable)` does return a `Future<?>`, calling `get()` on it always return `null`.
+
+The `performCount()` method can also throw a runtime exception, which will then be thrown by the `get()` call as an `ExecutionException`.
+
+Finally, it is also possible that our `performCount()` to hang indefinitely, such as with a deadlock or infinite loop. Luckily, the call to` get()` includes a timeout value. While each call to `Future.get()` can wait up to a day for a result, it will eventually finish.
